@@ -1,0 +1,57 @@
+---
+- hosts: local
+  connection: local
+  become: true
+  tasks:
+
+    - name: yum install httpd
+      yum:
+        name: httpd
+        state: installed
+
+    - name: httpd enable
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+    # getenforce
+    # vi /etc/selinux/config
+    ## SELINUX=disabled
+    #- name: Enable SELinux
+    #  selinux:
+    #    policy: targeted
+    #    state: enforcing
+
+    #- name: Put SELinux in permissive mode, logging actions that would be blocked.
+    #  selinux:
+    #    policy: targeted
+    #    state: permissive
+
+    - name: Disable SELinux
+      selinux:
+        state: disabled
+
+    # /etc/locale.conf
+    - name: Check locale
+      command: localectl status
+      register: localectl_result
+      check_mode: no
+      changed_when: false
+    
+    - name: Set locale jp_JP.utf8
+      command: localectl set-locale LANG=ja_JP.utf8
+      when: "'LANG=ja_JP.utf8' not in localectl_result.stdout"
+
+    - name: Print result localectl 
+      debug: 
+        var: localectl_result
+    
+    # /etc/localtime
+    - name: set timezone to Asia/Tokyo
+      timezone:
+        name: Asia/Tokyo
+      register: timezone_result
+
+    - name: Print result timezone
+      debug:
+        var: timezone_result
